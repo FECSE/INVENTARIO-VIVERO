@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vivero – cada cama, planta por planta</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#FAFAF8;--ink:#1a1a17;--mute:#6f6f69;--line:#d9d9d3;--g:#1b8a52;--halo:#d8ebdd;--panel:#136b3e;--gravel:#efeee9;--bed:#d3d1c8;--bag:#7d7b72;
+--serif:"Source Serif 4",Georgia,serif;--sans:"Plus Jakarta Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 24px 48px}
+h1{margin:0;font:400 clamp(28px,4.2vw,44px)/1.1 var(--serif)}
+h1 em{color:var(--g)}
+.sub{margin:10px 0 0;color:var(--mute);font-size:16px}
+.status{margin:6px 0 0;font:500 11px var(--mono);color:var(--mute);letter-spacing:.04em}
+.steps{position:relative;display:grid;grid-template-columns:repeat(5,1fr);margin:34px 0 26px}
+.steps::before{content:"";position:absolute;top:28px;left:10%;right:10%;border-top:1px solid var(--line)}
+.st{position:relative;background:none;border:0;cursor:pointer;font:inherit;color:var(--mute);text-align:center;padding:0 4px}
+.st .c{width:56px;height:56px;margin:0 auto 10px;border-radius:50%;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;font:600 20px var(--serif);color:var(--mute)}
+.st .l{display:block;font:500 10.5px var(--mono);letter-spacing:.1em}
+.st b{display:block;color:var(--ink);font-weight:500;font-size:15px}
+.st small{font-size:12px;color:#9a9a93}
+.st:hover .c{border-color:var(--g)}
+.st:focus-visible{outline:2px solid var(--g);outline-offset:4px;border-radius:8px}
+.st[aria-pressed=true] .c{background:var(--g);color:#fff;border-color:var(--g);box-shadow:0 0 0 7px var(--halo)}
+.st[aria-pressed=true] .l{color:var(--g)}.st[aria-pressed=true] b{font-weight:700}
+.main{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.map{background:var(--gravel);padding:22px}
+.beds{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.bed{margin:0;transition:opacity .2s}.sel .bed:not(.on){opacity:.28}
+svg{width:100%;height:auto;display:block;background:var(--bed);border-radius:3px}
+figcaption{margin-top:7px;font-size:12px;color:var(--mute);line-height:1.3}figcaption b{display:block;color:var(--ink);font-size:14px}
+.warn{color:#b42318;font-weight:700}
+circle{transition:opacity .15s}
+.dim circle:not(.hl){opacity:.18}
+circle.hl{stroke:#111;stroke-width:1}
+.occ{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--mute)}
+.occ b{color:var(--ink);font:600 17px var(--serif)}.occ.over b{color:#b42318}
+.bar{height:4px;background:var(--bed);border-radius:2px;margin:3px 0 8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--g)}.over+.bar i{background:#b42318}
+.occt{display:flex;align-items:center;gap:16px;margin:0 0 18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.occt strong{font:400 40px/1 var(--serif);color:var(--g)}.occt .t{flex:1;font-size:13px;color:var(--mute)}.occt .t b{display:block;color:var(--ink);font-size:15px}
+.occt .bar{flex:1;height:8px;margin:0;max-width:240px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;color:var(--mute);font-size:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-2px;margin-right:6px}
+.panel{background:var(--panel);color:#fff;padding:28px 30px;display:flex;flex-direction:column;min-height:420px}
+.panel .k{font:500 10.5px var(--mono);letter-spacing:.14em;color:#bfe0cb}
+.panel h2{margin:10px 0 2px;font:400 30px var(--serif)}
+.panel .s{font:italic 14px var(--serif);color:#cfe7d8;margin-bottom:14px}
+.rows{overflow:auto;max-height:430px;flex:1}
+.row{display:flex;align-items:center;gap:12px;padding:8px 4px;border-bottom:1px solid #ffffff22;cursor:pointer}
+.row:hover{background:#ffffff14}
+.dot{flex:none;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px #ffffffcc}
+.row span:nth-child(2){flex:1}.row small{color:#bfe0cb}
+.row b{font-weight:700;font-variant-numeric:tabular-nums}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid #ffffff66;margin-top:12px;padding-top:12px;font-size:16px}
+.total b{font:600 28px var(--serif)}
+.all{margin-top:10px;background:none;border:1px solid #ffffff66;color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:12px;cursor:pointer;align-self:flex-start}
+.all:hover{background:#ffffff1f}
+#tip{position:fixed;z-index:9;width:250px;background:#fff;border:1px solid var(--line);border-top:3px solid var(--g);border-radius:4px;padding:12px 14px;box-shadow:0 10px 28px #0003;pointer-events:none;display:none}
+#tip h3{margin:0;font:600 17px var(--serif)}#tip p{margin:2px 0 10px;color:var(--mute)}#tip p b{color:var(--g);font-size:22px}
+.gal{display:flex;gap:5px;min-height:64px}.gal img{width:0;flex:1;height:72px;object-fit:cover;border-radius:3px}
+.gal:empty{align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:3px;font-size:12px;color:var(--mute)}
+.gal:empty::before{content:"Sin fotos aún"}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.btn{border:1px solid var(--g);background:var(--g);color:#fff;border-radius:20px;padding:7px 15px;font:500 13px var(--sans);cursor:pointer;white-space:nowrap}
+.btn.o{background:none;color:var(--g)}.btn:hover{filter:brightness(.93)}.btn.o:hover{background:var(--halo)}
+.btn:focus-visible,.edl button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#ed{position:fixed;inset:0;background:#0007;display:none;z-index:20;padding:20px;overflow:auto}#ed.on{display:block}
+.dlg{max-width:920px;margin:0 auto;background:var(--bg);border-radius:4px;border-top:4px solid var(--g);display:grid;grid-template-columns:240px 1fr;height:min(680px,calc(100vh - 40px));overflow:hidden}
+.edl{border-right:1px solid var(--line);overflow:auto;padding:8px 0}
+.edl button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:9px 16px;font:inherit;text-align:left;cursor:pointer;color:var(--ink)}
+.edl button:hover{background:var(--gravel)}.edl button[aria-current=true]{background:var(--halo);font-weight:700}
+.dot2{flex:none;width:12px;height:12px;border-radius:50%}
+.edf{padding:20px 24px;overflow:auto}
+.edf h3{margin:0;font:600 22px var(--serif)}
+.edf label,.edf .lb{display:block;margin:14px 0 0;font:500 11px var(--mono);letter-spacing:.06em;color:var(--mute)}
+.edf input[type=text],.edf textarea{display:block;width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:3px;font:14px var(--sans);background:#fff;color:var(--ink)}
+.edf input[type=color]{display:block;margin-top:4px;width:56px;height:34px;padding:2px;border:1px solid var(--line);background:#fff}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}.thumbs small{color:var(--mute)}
+.thumbs div{position:relative}.thumbs img{width:92px;height:92px;object-fit:cover;border-radius:3px;display:block}
+.thumbs button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:#000b;color:#fff;cursor:pointer;line-height:1}
+.erow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}.erow input[type=text]{flex:1;min-width:180px;margin:0!important}
+.edf hr{border:0;border-top:1px solid var(--line);margin:20px 0 14px}
+#tip .sci{display:block;color:var(--mute);font:italic 13px var(--serif)}
+#tip .desc{font-size:12.5px;color:#444;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}#tip .desc:empty{display:none}
+@media(max-width:900px){.dlg{grid-template-columns:1fr;grid-template-rows:150px 1fr}.edl{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:900px){.main{grid-template-columns:1fr}.st .c{width:44px;height:44px;font-size:17px}.steps::before{top:22px}.st small{display:none}}
+@media(max-width:560px){.beds{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><h1>Del vivero al bosque — <em>cada cama, planta por planta.</em></h1><button class="btn o" id="edopen">Editar plantas</button></div>
+  <p class="sub">Cantidades tomadas del seguimiento de entradas y salidas del vivero.</p>
+  <p class="status" id="status"></p>
+  <div class="steps" id="steps"></div>
+  <div class="main">
+    <div class="map">
+      <div class="occt" id="occt"></div>
+      <div class="beds" id="beds"></div>
+      <div class="legend">
+        <span><i style="border:1.5px solid var(--bag)"></i>Enfundada (sin especie)</span>
+        <span><i style="background:var(--bed)"></i>Espacio vacío (sin círculo)</span>
+        <span>Círculo grande = funda grande · pequeño = funda pequeña</span>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+<div id="tip"><h3></h3><i class="sci"></i><p></p><div class="desc"></div><div class="gal"></div></div>
+<div id="ed" role="dialog" aria-modal="true" aria-label="Editar plantas"><div class="dlg"><div class="edl" id="edl"></div><div class="edf" id="edf"></div></div></div>
+
+<script>
+/* ===== CONFIGURACIÓN ===== */
+// Pega aquí el enlace CSV de tu Google Sheet publicado (ver instrucciones). Vacío = usa los datos de respaldo.
+const SHEET_CSV='';
+const REFRESH_MIN=5;                       // se vuelve a leer la hoja cada 5 min
+const BED_TYPE={1:'s',2:'s',3:'g',4:'s',5:'g'}; // s = fundas pequeñas, g = fundas grandes
+const G={s:{c:15,r:67,txt:'Fundas pequeñas'},g:{c:12,r:51,txt:'Fundas grandes'}}; // capacidad: 1005 y 612
+const FOTOS=3;                             // fotos/<nombre-planta>/1.jpg ... 3.jpg
+const FALLBACK={
+ 1:[['Anonas',69],['Borojó',32],['Caimitos',36],['Palmito',9],['Palma de cera',8],['SN (sin nombre)',14],['Cauchín',3],['Uva silvestre',5],['Tonglo',36],['Clusia',76]],
+ 2:[['Cacao',57],['Enfundadas',238]],
+ 3:[['Carrizos nativos',36],['Piperacea (SN)',165]],
+ 4:[['Guaba',180]],
+ 5:[['Borojó',62],['Eugenia',15],['Cauchín',7],['Maco',14],['Familia del frutipan',40],['Enfundadas',112],['Cedro/Nogal',2]]};
+/* Un color fijo por planta (ninguna se repite). Plantas nuevas toman el siguiente color libre de PAL. */
+const COLORS={'Anonas':'#1b8a52','Borojó':'#0ea5e9','Caimitos':'#7c3aed','Palmito':'#f59e0b','Palma de cera':'#dc2626','SN (sin nombre)':'#db2777','Cauchín':'#84cc16','Uva silvestre':'#ea580c','Tonglo':'#2f4fd8','Clusia':'#155e75','Cacao':'#7a4a2b','Carrizos nativos':'#a21caf','Piperacea (SN)':'#14b8a6','Guaba':'#475569','Eugenia':'#f472b6','Maco':'#a16207','Familia del frutipan':'#4d7c0f','Cedro/Nogal':'#111827'};
+const PAL=['#06b6d4','#a78bfa','#be123c','#65a30d','#0891b2','#c2410c','#6366f1','#e11d48'];
+const BAG='#7d7b72',W=110,H=510;
+
+/* ===== LECTURA DE LA HOJA ===== */
+function csv(t){const rows=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const h=t[i];
+ if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=h}
+ else if(h=='"')q=true;else if(h==','){r.push(c);c=''}
+ else if(h=='\n'||h=='\r'){if(h=='\r'&&t[i+1]=='\n')i++;r.push(c);rows.push(r);r=[];c=''}else c+=h}
+ if(c||r.length){r.push(c);rows.push(r)}return rows}
+function fromRows(rows){const d={};rows.forEach(r=>{const m=/^\s*cama\s*(\d+)/i.exec(r[0]||'');if(!m)return;
+ const name=(r[1]||'').trim(),q=parseInt(String(r[2]||'').replace(/[^\d-]/g,''),10);if(!name||!(q>0))return;
+ const b=d[m[1]]||(d[m[1]]=[]),f=b.find(x=>x[0]===name);f?f[1]+=q:b.push([name,q])});return d}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Datos editables por planta: {nombre, cientifico, descripcion, color, fotos[]}.
+   plantas.json (opcional, en el repo) = base compartida · localStorage = cambios de este navegador */
+const LS='vivero-info-v1';let BASE={},LOCAL={},INFO={},KEYS=[],cur='';
+const dn=(k,n)=>(INFO[k]&&INFO[k].nombre)||n;
+async function loadInfo(){try{const r=await fetch('plantas.json');if(r.ok)BASE=await r.json()}catch(e){}
+  try{LOCAL=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){LOCAL={}}INFO={...BASE,...LOCAL}}
+function persist(){try{localStorage.setItem(LS,JSON.stringify(LOCAL));return true}
+  catch(e){msg('No hay espacio en el navegador. Quita fotos o exporta plantas.json.');return false}}
+function upd(k,patch){const e={...(INFO[k]||{}),...patch};LOCAL[k]=e;INFO[k]=e;return persist()}
+let data=FALLBACK,sel=0;
+const st=t=>document.getElementById('status').textContent=t;
+async function load(){
+  if(!SHEET_CSV){st('DATOS DE EJEMPLO · SIN HOJA VINCULADA');return}
+  try{const res=await fetch(SHEET_CSV+(SHEET_CSV.includes('?')?'&':'?')+'t='+Date.now());if(!res.ok)throw 0;
+    const d=fromRows(csv(await res.text()));if(!Object.keys(d).length)throw 0;data=d;
+    st('ACTUALIZADO DESDE GOOGLE SHEETS · '+new Date().toLocaleTimeString('es'))}
+  catch(e){st('NO SE PUDO LEER LA HOJA · MOSTRANDO LA ÚLTIMA LECTURA')}
+}
+
+/* ===== DIBUJO ===== */
+const slug=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const isBag=n=>/^enfundad/i.test(n);
+const BLK={},COL={};
+const $=id=>document.getElementById(id);
+const pct=x=>(x*100).toLocaleString('es',{maximumFractionDigits:1})+' %';
+function render(){
+  const nums=Object.keys(data).map(Number).sort((a,b)=>a-b);
+  const names=[...new Set(nums.flatMap(n=>data[n].filter(x=>!isBag(x[0])).map(x=>x[0])))];
+  Object.keys(COL).forEach(k=>delete COL[k]);
+  const pick=n=>(INFO[n]&&INFO[n].color)||COLORS[n];
+  const used=new Set(names.map(pick).filter(Boolean)),free=PAL.filter(c=>!used.has(c));
+  names.forEach(n=>COL[n]=pick(n)||free.shift()||'#888888');KEYS=names.map(n=>[n,n]);
+  let beds='',steps='';const totals={},per={};let grand=0,capAll=0;
+  nums.forEach(n=>{
+    const g=G[BED_TYPE[n]||'s'],px=W/g.c,py=H/g.r,r=Math.min(px,py)*.44,cap=g.c*g.r;let idx=0,svg='';per[n]=0;capAll+=cap;
+    data[n].forEach(([name,q],bi)=>{
+      const bag=isBag(name),id=n+'-'+bi,key=bag?'__bag':name;
+      BLK[id]={name:dn(key,bag?'Enfundadas (sin especificar)':name),orig:name,key,q,bag,bed:n};
+      const fill=bag?'none':COL[name],stk=bag?`stroke="${BAG}" stroke-width=".7"`:'';
+      for(let k=0;k<q&&idx<cap;k++,idx++)
+        svg+=`<circle data-b="${id}" data-s="${key}" cx="${((idx%g.c)+.5)*px}" cy="${(Math.floor(idx/g.c)+.5)*py}" r="${r}" fill="${fill}" ${stk}/>`;
+      const t=totals[key]||(totals[key]={name:BLK[id].name,q:0,beds:new Set(),bag});t.q+=q;t.beds.add(n);per[n]+=q;grand+=q;
+    });
+    const over=per[n]>cap?` <span class="warn">· supera la capacidad (${cap})</span>`:'';
+    beds+=`<figure class="bed${sel===n?' on':''}"><div class="occ${per[n]>cap?' over':''}"><span>Espacio ocupado</span><b>${pct(per[n]/cap)}</b></div><div class="bar"><i style="width:${Math.min(100,per[n]/cap*100)}%"></i></div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cama ${n}">${svg}</svg><figcaption><b>Cama ${n}</b>${g.txt} · ${per[n]} de ${cap}${over}</figcaption></figure>`;
+    steps+=`<button class="st" data-n="${n}" aria-pressed="${sel===n}"><div class="c">${n}</div><span class="l">CAMA ${n}</span><b>${g.txt}</b><small>${per[n]} plantas</small></button>`;
+  });
+  if(totals.__bag)KEYS.push(['__bag','Enfundadas (sin especificar)']);
+  $('occt').innerHTML=`<strong>${pct(grand/capAll)}</strong><div class="t"><b>del espacio del vivero está ocupado</b>${grand.toLocaleString('es')} de ${capAll.toLocaleString('es')} espacios en las ${nums.length} camas</div><div class="bar"><i style="width:${Math.min(100,grand/capAll*100)}%"></i></div>`;
+  $('beds').innerHTML=beds;$('steps').innerHTML=steps;$('beds').parentNode.classList.toggle('sel',!!sel&&!!per[sel]);
+  /* panel de totales */
+  let list;
+  if(sel&&data[sel]){list=data[sel].map(([nm,q])=>[isBag(nm)?'__bag':nm,{name:dn(isBag(nm)?'__bag':nm,isBag(nm)?'Enfundadas (sin especificar)':nm),q,bag:isBag(nm)}])}
+  else list=Object.entries(totals);
+  list.sort((a,b)=>(a[1].bag-b[1].bag)||b[1].q-a[1].q||a[1].name.localeCompare(b[1].name));
+  const sum=list.reduce((s,x)=>s+x[1].q,0),nsp=list.filter(x=>!x[1].bag).length;
+  $('panel').innerHTML=`<div class="k">${sel&&data[sel]?`CAMA ${sel} DE ${nums.length} · ${G[BED_TYPE[sel]||'s'].txt.toUpperCase()}`:'TODO EL VIVERO'}</div>
+   <h2>${sum.toLocaleString('es')} plantas</h2><div class="s">${nsp} especies${list.some(x=>x[1].bag)?' y plantas enfundadas':''}</div>
+   <div class="rows">${list.map(([k,t])=>`<div class="row" data-s="${esc(k)}" title="Clic para editar"><span class="dot" style="${t.bag?'border:2px solid #fff':'background:'+COL[k]}"></span><span>${esc(t.name)}${!sel&&t.beds.size?`<br><small>Cama${t.beds.size>1?'s':''} ${[...t.beds].sort().join(', ')}</small>`:''}</span><b>${t.q.toLocaleString('es')}</b></div>`).join('')}</div>
+   <div class="total"><span>Total</span><b>${sum.toLocaleString('es')}</b></div>
+   ${sel?'<button class="all" id="all">Ver todo el vivero</button>':''}`;
+}
+
+/* ===== INTERACCIÓN ===== */
+const tip=$('tip'),gal=tip.querySelector('.gal'),miss=new Set();
+const mark=s=>{$('beds').classList.add('dim');document.querySelectorAll(s).forEach(c=>c.classList.add('hl'))};
+const unmark=()=>{$('beds').classList.remove('dim');document.querySelectorAll('circle.hl').forEach(c=>c.classList.remove('hl'))};
+function show(id){const b=BLK[id],i=INFO[b.key]||{};mark(`circle[data-b="${id}"]`);
+  tip.querySelector('h3').textContent=b.name;tip.querySelector('.sci').textContent=i.cientifico||'';
+  tip.querySelector('p').innerHTML=`<b>${b.q}</b> en la cama ${b.bed}`;tip.querySelector('.desc').textContent=i.descripcion||'';gal.innerHTML='';
+  const fs=(i.fotos||[]).slice(0,4);
+  if(fs.length)fs.forEach(u=>{const im=new Image();im.alt=b.name;im.src=u;gal.appendChild(im)});
+  else for(let n=1;n<=FOTOS;n++){const u=`fotos/${slug(b.bag?'enfundadas':b.orig)}/${n}.jpg`;if(miss.has(u))continue;
+    const im=new Image();im.alt=b.name;im.onerror=()=>{miss.add(u);im.remove()};im.src=u;gal.appendChild(im)}
+  tip.style.display='block'}
+function move(e){const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+16,y=e.clientY+16;
+  if(x+w>innerWidth-8)x=e.clientX-w-16;if(y+h>innerHeight-8)y=innerHeight-h-8;
+  tip.style.left=Math.max(8,x)+'px';tip.style.top=Math.max(8,y)+'px'}
+const beds=$('beds');
+beds.addEventListener('pointerover',e=>{const c=e.target.closest('circle');if(!c)return;
+  if(tip.dataset.id!==c.dataset.b){tip.dataset.id=c.dataset.b;unmark();show(c.dataset.b)}move(e)});
+beds.addEventListener('pointermove',e=>{if(tip.style.display==='block')move(e)});
+beds.addEventListener('pointerout',e=>{const c=e.target.closest('circle');
+  if(c&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('circle[data-b="'+c.dataset.b+'"]'))){tip.style.display='none';tip.dataset.id='';unmark()}});
+$('panel').addEventListener('pointerover',e=>{const r=e.target.closest('.row');if(r){unmark();mark(`circle[data-s="${r.dataset.s}"]`)}});
+$('panel').addEventListener('pointerleave',unmark);
+$('panel').addEventListener('click',e=>{if(e.target.id==='all'){sel=0;render();return}const r=e.target.closest('.row');if(r)openEd(r.dataset.s)});
+$('steps').addEventListener('click',e=>{const b=e.target.closest('.st');if(b){const n=+b.dataset.n;sel=sel===n?0:n;render()}});
+
+
+/* ===== MENÚ DE EDICIÓN ===== */
+const msg=t=>{const m=$('edm');if(m)m.textContent=t};
+const origOf=k=>(KEYS.find(x=>x[0]===k)||[k,k])[1];
+function drawList(){$('edl').innerHTML=KEYS.map(([k,n])=>`<button data-k="${esc(k)}" aria-current="${k===cur}"><span class="dot2" style="${k==='__bag'?'border:2px solid '+BAG:'background:'+COL[k]}"></span>${esc(dn(k,n))}</button>`).join('')}
+function drawThumbs(){const f=(INFO[cur]&&INFO[cur].fotos)||[];
+  $('thumbs').innerHTML=f.map((u,j)=>`<div><img src="${esc(u)}" alt=""><button data-del="${j}" aria-label="Quitar foto">×</button></div>`).join('')||'<small>Aún no hay fotos para esta planta.</small>'}
+function drawEd(){
+  drawList();const i=INFO[cur]||{},o=origOf(cur);
+  $('edf').innerHTML=`<h3>${esc(o)}</h3><p class="status" id="edm">Los cambios se guardan automáticamente en este navegador.</p>
+   <label>NOMBRE QUE SE MUESTRA<input type="text" id="f-n" value="${esc(i.nombre||'')}" placeholder="${esc(o)}"></label>
+   <label>NOMBRE CIENTÍFICO<input type="text" id="f-s" value="${esc(i.cientifico||'')}"></label>
+   <label>DESCRIPCIÓN<textarea id="f-d" rows="4">${esc(i.descripcion||'')}</textarea></label>
+   ${cur==='__bag'?'':`<label>COLOR EN EL MAPA<input type="color" id="f-c" value="${COL[cur]||'#888888'}"></label>`}
+   <div class="lb">FOTOS</div><div class="thumbs" id="thumbs"></div>
+   <div class="erow"><button class="btn" id="f-add">Subir fotos</button><input type="file" id="f-file" accept="image/*" multiple hidden>
+   <input type="text" id="f-url" placeholder="o pega una URL / ruta (fotos/anonas/1.jpg)"><button class="btn o" id="f-urlb">Agregar</button></div>
+   <hr><div class="erow"><button class="btn o" id="f-reset">Restablecer esta planta</button><button class="btn o" id="f-exp">Exportar plantas.json</button>
+   <button class="btn o" id="f-imp">Importar</button><input type="file" id="f-impf" accept=".json,application/json" hidden><button class="btn" id="f-close">Listo</button></div>`;
+  drawThumbs()}
+function openEd(k){if(!KEYS.length)return;cur=KEYS.some(x=>x[0]===k)?k:(cur||KEYS[0][0]);$('ed').classList.add('on');drawEd()}
+function closeEd(){$('ed').classList.remove('on');render()}
+function shrink(file){return new Promise((ok,no)=>{const fr=new FileReader();fr.onerror=no;fr.onload=()=>{const im=new Image();im.onerror=no;
+  im.onload=()=>{const k=Math.min(1,480/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.78))};im.src=fr.result};fr.readAsDataURL(file)})}
+const addFoto=u=>{const f=[...((INFO[cur]&&INFO[cur].fotos)||[]),u];return upd(cur,{fotos:f})};
+$('edopen').onclick=()=>openEd();
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('ed').classList.contains('on'))closeEd()});
+$('ed').addEventListener('click',e=>{const t=e.target;
+  if(t.id==='ed'||t.id==='f-close')return closeEd();
+  const kb=t.closest('[data-k]');if(kb){cur=kb.dataset.k;return drawEd()}
+  if(t.dataset.del!==undefined){const f=[...INFO[cur].fotos];f.splice(+t.dataset.del,1);upd(cur,{fotos:f});return drawThumbs()}
+  if(t.id==='f-add')return $('f-file').click();
+  if(t.id==='f-urlb'){const v=$('f-url').value.trim();if(v&&addFoto(v)){$('f-url').value='';drawThumbs();msg('Foto agregada.')}return}
+  if(t.id==='f-reset'){delete LOCAL[cur];if(BASE[cur])INFO[cur]=BASE[cur];else delete INFO[cur];persist();render();return drawEd()}
+  if(t.id==='f-exp'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(INFO,null,1)],{type:'application/json'}));a.download='plantas.json';a.click();return msg('Descargado. Súbelo a la raíz del repositorio para compartir los cambios.')}
+  if(t.id==='f-imp')return $('f-impf').click()});
+$('ed').addEventListener('input',e=>{const m={'f-n':'nombre','f-s':'cientifico','f-d':'descripcion'}[e.target.id];if(m&&upd(cur,{[m]:e.target.value.trim()}))msg('Guardado.')});
+$('ed').addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='f-n'){drawList()}
+  if(t.id==='f-c'){const v=t.value.toLowerCase(),d=Object.entries(COL).find(([n,c])=>n!==cur&&c.toLowerCase()===v);
+    if(d){msg(`Ese color ya lo usa ${dn(d[0],d[0])}. Elige otro.`);t.value=COL[cur];return}
+    if(upd(cur,{color:v})){COL[cur]=v;drawList();msg('Color guardado.')}}
+  if(t.id==='f-file'){msg('Procesando fotos…');let n=0;for(const f of t.files){try{if(addFoto(await shrink(f)))n++}catch(x){}}
+    t.value='';drawThumbs();msg(n?`${n} foto(s) agregada(s).`:'No se pudo agregar la foto.')}
+  if(t.id==='f-impf'&&t.files[0]){try{const o=JSON.parse(await t.files[0].text());Object.keys(o).forEach(k=>{if(o[k]&&typeof o[k]==='object'){LOCAL[k]=INFO[k]=o[k]}});
+    persist();t.value='';render();drawEd();msg('Importado.')}catch(x){msg('Ese archivo no es un plantas.json válido.')}}});
+
+loadInfo().then(load).then(render);
+setInterval(()=>load().then(render),REFRESH_MIN*60000);
+</script>
+</body>
+</html>

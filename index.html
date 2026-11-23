@@ -88,6 +88,27 @@ circle.hl{stroke:#111;stroke-width:1}
 #tip .desc{font-size:12.5px;color:#444;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}#tip .desc:empty{display:none}
 @media(max-width:900px){.dlg{grid-template-columns:1fr;grid-template-rows:150px 1fr}.edl{border-right:0;border-bottom:1px solid var(--line)}}
 @media(max-width:900px){.main{grid-template-columns:1fr}.st .c{width:44px;height:44px;font-size:17px}.steps::before{top:22px}.st small{display:none}}
+#ed .warn2{margin:10px 0 0;padding:9px 12px;background:#fff4e5;border-left:3px solid #f59e0b;font-size:12.5px;color:#5c3b00}
+#lb{position:fixed;inset:0;z-index:30;background:#090d0af2;color:#fff;display:none;flex-direction:column;padding:14px 18px 12px}#lb.on{display:flex}
+.lbh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.lbh h3{margin:0;font:600 24px var(--serif)}.lbh i{color:#bfe0cb;font:italic 15px var(--serif)}.lbh small{display:block;color:#9db3a5;font:500 11px var(--mono);letter-spacing:.08em;margin-top:3px}
+#lbx{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:#ffffff22;color:#fff;font-size:28px;line-height:1;cursor:pointer}
+.lbm{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:12px;position:relative}
+.lbm img{max-width:100%;max-height:calc(100vh - 270px);max-height:calc(100dvh - 270px);object-fit:contain;border-radius:3px}
+.lbe{color:#cfe7d8;text-align:center}
+.nv{flex:none;width:48px;height:48px;border-radius:50%;border:0;background:#ffffff26;color:#fff;font-size:30px;line-height:1;cursor:pointer}
+.nv:hover,#lbx:hover{background:#ffffff40}
+.lbt{display:flex;gap:8px;justify-content:center;padding:8px 0;overflow-x:auto}
+.lbt button{flex:none;border:2px solid transparent;padding:0;background:none;opacity:.55;cursor:pointer;border-radius:3px}.lbt button[aria-current=true]{border-color:#fff;opacity:1}
+.lbt img{width:66px;height:50px;object-fit:cover;display:block;border-radius:2px}
+.lbf{max-width:780px;width:100%;margin:0 auto;text-align:center;font-size:14px;color:#dbe8df;max-height:110px;overflow:auto}
+.lbf b{font:600 20px var(--serif);color:#fff}.lbf p{margin:4px 0 8px}
+#lb :focus-visible{outline:2px solid #fff;outline-offset:2px}
+.gal img{cursor:zoom-in}
+#tip .big{display:none;margin-top:10px;width:100%}#tip .hint{display:block;margin-top:8px;color:var(--mute);font-size:11.5px}
+@media(hover:none){#tip .big{display:block}#tip .hint{display:none}#tip{pointer-events:auto}#tip .x{display:block}}
+@media(max-width:700px){#lb{padding:10px 10px 8px}.lbh h3{font-size:20px}.lbm img{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
+.nv{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;font-size:26px;background:#000a}#lbp{left:2px}#lbn{right:2px}}
 #tip .x{display:none;position:absolute;top:6px;right:8px;background:none;border:0;font-size:26px;line-height:1;color:var(--mute);cursor:pointer;padding:4px 8px}
 @media(hover:none){body{cursor:pointer}}
 @media(max-width:700px){
@@ -132,14 +153,15 @@ h1{font-size:30px}.sub{font-size:15px}
     <div class="panel" id="panel"></div>
   </div>
 </div>
-<div id="tip"><button class="x" id="tipx" aria-label="Cerrar">×</button><h3></h3><i class="sci"></i><p></p><div class="desc"></div><div class="gal"></div></div>
+<div id="tip"><button class="x" id="tipx" aria-label="Cerrar">×</button><h3></h3><i class="sci"></i><p></p><div class="desc"></div><div class="gal"></div><button class="btn o big" id="tipb">Ver fotos en grande</button><small class="hint">Clic para ver las fotos en grande</small></div>
+<div id="lb" role="dialog" aria-modal="true" aria-label="Fotos de la planta"></div>
 <div id="ed" role="dialog" aria-modal="true" aria-label="Editar plantas"><div class="dlg"><div class="edl" id="edl"></div><div class="edf" id="edf"></div></div></div>
 
 <script>
 /* ===== CONFIGURACIÓN ===== */
 // Pega aquí el enlace CSV de tu Google Sheet publicado (ver instrucciones). Vacío = usa los datos de respaldo.
 const SHEET_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vQljfq82BrqXrlzm6VbZJoAeNQ4aT_V3HjqwaB15UYx8BddUfyeXlWFHSsDlYy2oFVpyu7Bs2u5ekUp/pub?gid=1973733502&single=true&output=csv';
-const REFRESH_MIN=120;                       // se vuelve a leer la hoja cada 120 min
+const REFRESH_MIN=5;                       // se vuelve a leer la hoja cada 5 min
 const BED_TYPE={1:'s',2:'s',3:'g',4:'s',5:'g'}; // s = fundas pequeñas, g = fundas grandes
 const G={s:{c:15,r:67,txt:'Fundas pequeñas'},g:{c:12,r:51,txt:'Fundas grandes'}}; // capacidad: 1005 y 612
 const FOTOS=3;                             // fotos/<nombre-planta>/1.jpg ... 3.jpg
@@ -171,9 +193,9 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
    plantas.json (opcional, en el repo) = base compartida · localStorage = cambios de este navegador */
 const LS='vivero-info-v1';let BASE={},LOCAL={},INFO={},KEYS=[],cur='';
 const dn=(k,n)=>(INFO[k]&&INFO[k].nombre)||n;
-async function loadInfo(){try{const r=await fetch('plantas.json');if(r.ok)BASE=await r.json()}catch(e){}
+async function loadInfo(){try{const r=await fetch('plantas.json?t='+Date.now());if(r.ok)BASE=await r.json()}catch(e){}
   try{LOCAL=JSON.parse(localStorage.getItem(LS)||'{}')}catch(e){LOCAL={}}INFO={...BASE,...LOCAL}}
-function persist(){try{localStorage.setItem(LS,JSON.stringify(LOCAL));return true}
+function persist(){try{localStorage.setItem(LS,JSON.stringify(LOCAL));badge();return true}
   catch(e){msg('No hay espacio en el navegador. Quita fotos o exporta plantas.json.');return false}}
 function upd(k,patch){const e={...(INFO[k]||{}),...patch};LOCAL[k]=e;INFO[k]=e;return persist()}
 let data=FALLBACK,sel=0;
@@ -193,6 +215,7 @@ const BLK={},COL={};
 const $=id=>document.getElementById(id);
 const pct=x=>(x*100).toLocaleString('es',{maximumFractionDigits:1})+' %';
 function render(){
+  badge();
   const nums=Object.keys(data).map(Number).sort((a,b)=>a-b);
   const names=[...new Set(nums.flatMap(n=>data[n].filter(x=>!isBag(x[0])).map(x=>x[0])))];
   Object.keys(COL).forEach(k=>delete COL[k]);
@@ -227,7 +250,7 @@ function render(){
   const sum=list.reduce((s,x)=>s+x[1].q,0),nsp=list.filter(x=>!x[1].bag).length;
   $('panel').innerHTML=`<div class="k">${sel&&data[sel]?`CAMA ${sel} DE ${nums.length} · ${G[BED_TYPE[sel]||'s'].txt.toUpperCase()}`:'TODO EL VIVERO'}</div>
    <h2>${sum.toLocaleString('es')} plantas</h2><div class="s">${nsp} especies${list.some(x=>x[1].bag)?' y plantas enfundadas':''}</div>
-   <div class="rows">${list.map(([k,t])=>`<div class="row" data-s="${esc(k)}" title="Clic para editar"><span class="dot" style="${t.bag?'border:2px solid #fff':'background:'+COL[k]}"></span><span>${esc(t.name)}${!sel&&t.beds.size?`<br><small>Cama${t.beds.size>1?'s':''} ${[...t.beds].sort().join(', ')}</small>`:''}</span><b>${t.q.toLocaleString('es')}</b></div>`).join('')}</div>
+   <div class="rows">${list.map(([k,t])=>`<div class="row" data-s="${esc(k)}" title="Clic para ver las fotos"><span class="dot" style="${t.bag?'border:2px solid #fff':'background:'+COL[k]}"></span><span>${esc(t.name)}${!sel&&t.beds.size?`<br><small>Cama${t.beds.size>1?'s':''} ${[...t.beds].sort().join(', ')}</small>`:''}</span><b>${t.q.toLocaleString('es')}</b></div>`).join('')}</div>
    <div class="total"><span>Total</span><b>${sum.toLocaleString('es')}</b></div>
    ${sel?'<button class="all" id="all">Ver todo el vivero</button>':''}`;
 }
@@ -257,16 +280,48 @@ beds.addEventListener('pointerover',e=>{if(e.pointerType!=='mouse')return;const 
 beds.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&tip.style.display==='block')move(e)});
 beds.addEventListener('pointerout',e=>{if(e.pointerType!=='mouse')return;const c=e.target.closest('circle');
   if(c&&!(e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest('circle[data-b="'+c.dataset.b+'"]')))hideTip()});
-beds.addEventListener('click',e=>{const sv=e.target.closest('svg');if(sv)pick(hit(sv,e),e);else hideTip()}); // toque: queda abierto hasta tocar fuera o la ×
+const canHover=matchMedia('(hover:hover)');
+beds.addEventListener('click',e=>{const sv=e.target.closest('svg');if(!sv)return hideTip();const c=hit(sv,e);
+  if(canHover.matches){hideTip();if(c){const b=BLK[c.dataset.b];openLB(b.key,b.name,`${b.q} en la cama ${b.bed}`)}}else pick(c,e)});
+tip.addEventListener('click',e=>{if(e.target.closest('.gal img,#tipb')&&tip.dataset.id){const b=BLK[tip.dataset.id];hideTip();openLB(b.key,b.name,`${b.q} en la cama ${b.bed}`)}}); // toque: queda abierto hasta tocar fuera o la ×
 document.addEventListener('click',e=>{if(!e.target.closest('#beds,#tip'))hideTip()});
 $('tipx').addEventListener('click',hideTip);
 $('panel').addEventListener('pointerover',e=>{const r=e.target.closest('.row');if(r){unmark();mark(`circle[data-s="${r.dataset.s}"]`)}});
 $('panel').addEventListener('pointerleave',unmark);
-$('panel').addEventListener('click',e=>{if(e.target.id==='all'){sel=0;render();return}const r=e.target.closest('.row');if(r)openEd(r.dataset.s)});
+$('panel').addEventListener('click',e=>{if(e.target.id==='all'){sel=0;render();return}const r=e.target.closest('.row');if(r){const k=r.dataset.s;openLB(k,dn(k,k==='__bag'?'Enfundadas (sin especificar)':k),r.querySelector('b').textContent+' plantas'+(sel?' en la cama '+sel:' en total'))}});
 $('steps').addEventListener('click',e=>{const b=e.target.closest('.st');if(b){const n=+b.dataset.n;sel=sel===n?0:n;render();if(sel&&ROT){const f=$('beds').querySelector('.on');if(f)f.scrollIntoView({behavior:'smooth',block:'center'})}}});
 
 
+/* ===== VISOR DE FOTOS (pantalla grande) ===== */
+const lb=$('lb');let LB={list:[],i:0,key:'',label:'',qty:'',load:false};
+async function openLB(key,label,qty){
+  const info=INFO[key]||{};let list=(info.fotos||[]).slice();
+  LB={list,i:0,key,label,qty,load:!list.length};lb.classList.add('on');document.body.style.overflow='hidden';drawLB();
+  if(!list.length){const base=slug(key==='__bag'?'enfundadas':key),mine=LB;
+    const ok=await Promise.all([1,2,3,4,5,6,7,8].map(n=>new Promise(r=>{const u=`fotos/${base}/${n}.jpg`,im=new Image();im.onload=()=>r(u);im.onerror=()=>r(null);im.src=u})));
+    if(LB!==mine)return;LB.list=ok.filter(Boolean);LB.load=false;drawLB()}}
+function closeLB(){lb.classList.remove('on');lb.innerHTML='';document.body.style.overflow=''}
+function stepLB(d){const n=LB.list.length;if(n>1){LB.i=(LB.i+d+n)%n;drawLB()}}
+function drawLB(){const i=INFO[LB.key]||{},n=LB.list.length;
+  lb.innerHTML=`<div class="lbh"><div><h3>${esc(LB.label)}</h3>${i.cientifico?`<i>${esc(i.cientifico)}</i>`:''}${n?`<small>FOTO ${LB.i+1} DE ${n}</small>`:''}</div><button id="lbx" aria-label="Cerrar">×</button></div>
+  <div class="lbm">${n?`${n>1?'<button class="nv" id="lbp" aria-label="Foto anterior">‹</button>':''}<img src="${esc(LB.list[LB.i])}" alt="${esc(LB.label)}">${n>1?'<button class="nv" id="lbn" aria-label="Foto siguiente">›</button>':''}`
+    :`<p class="lbe">${LB.load?'Cargando fotos…':'Aún no hay fotos de esta planta.<br>Agrégalas con «Editar esta planta».'}</p>`}</div>
+  ${n>1?`<div class="lbt">${LB.list.map((u,j)=>`<button data-i="${j}" aria-label="Ver foto ${j+1}" aria-current="${j===LB.i}"><img src="${esc(u)}" alt=""></button>`).join('')}</div>`:''}
+  <div class="lbf"><b>${esc(LB.qty)}</b>${i.descripcion?`<p>${esc(i.descripcion)}</p>`:''}<br><button class="btn o" id="lbe" style="color:#fff;border-color:#ffffff88">Editar esta planta</button></div>`;
+  const x=$('lbx');if(x)x.focus()}
+lb.addEventListener('click',e=>{const t=e.target;
+  if(t===lb||t.classList.contains('lbm')||t.closest('#lbx'))return closeLB();
+  if(t.closest('#lbp'))return stepLB(-1);if(t.closest('#lbn'))return stepLB(1);
+  const th=t.closest('[data-i]');if(th){LB.i=+th.dataset.i;return drawLB()}
+  if(t.closest('#lbe')){const k=LB.key;closeLB();openEd(k)}});
+let sx=null;lb.addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+lb.addEventListener('touchend',e=>{if(sx===null)return;const d=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(d)>50)stepLB(d<0?1:-1)},{passive:true});
+document.addEventListener('keydown',e=>{if(!lb.classList.contains('on'))return;
+  if(e.key==='Escape')closeLB();else if(e.key==='ArrowLeft')stepLB(-1);else if(e.key==='ArrowRight')stepLB(1)});
+
 /* ===== MENÚ DE EDICIÓN ===== */
+const pend=()=>Object.keys(LOCAL).filter(k=>JSON.stringify(LOCAL[k])!==JSON.stringify(BASE[k]));
+function badge(){const n=pend().length;$('edopen').textContent='Editar plantas'+(n?` · ${n} sin publicar`:'')}
 const msg=t=>{const m=$('edm');if(m)m.textContent=t};
 const origOf=k=>(KEYS.find(x=>x[0]===k)||[k,k])[1];
 function drawList(){$('edl').innerHTML=KEYS.map(([k,n])=>`<button data-k="${esc(k)}" aria-current="${k===cur}"><span class="dot2" style="${k==='__bag'?'border:2px solid '+BAG:'background:'+COL[k]}"></span>${esc(dn(k,n))}</button>`).join('')}
@@ -274,7 +329,8 @@ function drawThumbs(){const f=(INFO[cur]&&INFO[cur].fotos)||[];
   $('thumbs').innerHTML=f.map((u,j)=>`<div><img src="${esc(u)}" alt=""><button data-del="${j}" aria-label="Quitar foto">×</button></div>`).join('')||'<small>Aún no hay fotos para esta planta.</small>'}
 function drawEd(){
   drawList();const i=INFO[cur]||{},o=origOf(cur);
-  $('edf').innerHTML=`<h3>${esc(o)}</h3><p class="status" id="edm">Los cambios se guardan automáticamente en este navegador.</p>
+  $('edf').innerHTML=`<h3>${esc(o)}</h3>${pend().length?`<p class="warn2"><b>Hay ${pend().length} planta(s) con cambios guardados solo en este navegador.</b> Para verlos en el celular y en otros equipos: pulsa <i>Exportar plantas.json</i> y sube ese archivo a GitHub (raíz del repositorio).</p>`:''}
+   <p class="status" id="edm">Los cambios se guardan automáticamente en este navegador.</p>
    <label>NOMBRE QUE SE MUESTRA<input type="text" id="f-n" value="${esc(i.nombre||'')}" placeholder="${esc(o)}"></label>
    <label>NOMBRE CIENTÍFICO<input type="text" id="f-s" value="${esc(i.cientifico||'')}"></label>
    <label>DESCRIPCIÓN<textarea id="f-d" rows="4">${esc(i.descripcion||'')}</textarea></label>

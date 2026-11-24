@@ -109,6 +109,21 @@ circle.hl{stroke:#111;stroke-width:1}
 @media(hover:none){#tip .big{display:block}#tip .hint{display:none}#tip{pointer-events:auto}#tip .x{display:block}}
 @media(max-width:700px){#lb{padding:10px 10px 8px}.lbh h3{font-size:20px}.lbm img{max-height:calc(100vh - 290px);max-height:calc(100dvh - 290px)}
 .nv{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;font-size:26px;background:#000a}#lbp{left:2px}#lbn{right:2px}}
+html{scroll-behavior:smooth}
+.don{margin-top:56px;scroll-margin-top:16px}
+.don h2{margin:0;font:400 clamp(24px,3.4vw,36px)/1.15 var(--serif)}.don h2 em{color:var(--g)}
+.donm{display:grid;grid-template-columns:minmax(250px,1fr) minmax(0,2.2fr);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-top:22px}
+.donm .panel{min-height:0;justify-content:center}
+.donm .panel h2{font-size:clamp(38px,5vw,54px);margin:12px 0 2px}
+.dst{display:flex;gap:26px;margin-top:20px;padding-top:16px;border-top:1px solid #ffffff44}
+.dst b{display:block;font:600 26px var(--serif)}.dst span{font-size:12px;color:#cfe7d8}
+.drow{display:grid;grid-template-columns:118px 1fr auto;gap:16px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line)}
+.drow:last-child{border-bottom:0}
+.dd{font:500 11.5px var(--mono);letter-spacing:.05em;color:var(--mute);text-transform:uppercase}
+.dn b{font-weight:500;font-size:15.5px}.dn .bar{margin:6px 0 0;max-width:340px}
+.dq{font:600 22px var(--serif);text-align:right;white-space:nowrap}.dq small{font:400 12px var(--sans);color:var(--mute)}
+@media(max-width:900px){.donm{grid-template-columns:1fr}}
+@media(max-width:700px){.don{margin-top:40px}.drow{grid-template-columns:1fr auto;gap:4px 12px;padding:13px 16px}.dd{grid-column:1/-1}.dn .bar{max-width:none}}
 #tip .x{display:none;position:absolute;top:6px;right:8px;background:none;border:0;font-size:26px;line-height:1;color:var(--mute);cursor:pointer;padding:4px 8px}
 @media(hover:none){body{cursor:pointer}}
 @media(max-width:700px){
@@ -139,6 +154,7 @@ h1{font-size:30px}.sub{font-size:15px}
   <div class="top"><h1>Del vivero al bosque — <em>cada cama, planta por planta.</em></h1><button class="btn o" id="edopen">Editar plantas</button></div>
   <p class="sub">Cantidades tomadas del seguimiento de entradas y salidas del vivero.</p>
   <p class="status" id="status"></p>
+  <p class="sub" style="font-size:14px"><a href="#donaciones" style="color:var(--g)">Ver plantas donadas ↓</a></p>
   <div class="steps" id="steps"></div>
   <div class="main">
     <div class="map">
@@ -152,6 +168,14 @@ h1{font-size:30px}.sub{font-size:15px}
     </div>
     <div class="panel" id="panel"></div>
   </div>
+  <section class="don" id="donaciones">
+    <h2>Plantas nativas <em>donadas gratuitamente</em></h2>
+    <p class="sub">Entregas registradas por fecha y por persona que las recibió.</p>
+    <div class="donm">
+      <div class="panel" id="donp"></div>
+      <div id="donl"></div>
+    </div>
+  </section>
 </div>
 <div id="tip"><button class="x" id="tipx" aria-label="Cerrar">×</button><h3></h3><i class="sci"></i><p></p><div class="desc"></div><div class="gal"></div><button class="btn o big" id="tipb">Ver fotos en grande</button><small class="hint">Clic para ver las fotos en grande</small></div>
 <div id="lb" role="dialog" aria-modal="true" aria-label="Fotos de la planta"></div>
@@ -369,6 +393,20 @@ $('ed').addEventListener('change',async e=>{const t=e.target;
   if(t.id==='f-impf'&&t.files[0]){try{const o=JSON.parse(await t.files[0].text());Object.keys(o).forEach(k=>{if(o[k]&&typeof o[k]==='object'){LOCAL[k]=INFO[k]=o[k]}});
     persist();t.value='';render();drawEd();msg('Importado.')}catch(x){msg('Ese archivo no es un plantas.json válido.')}}});
 
+/* ===== PLANTAS DONADAS (editar aquí: [fecha AAAA-MM-DD, persona, total de plantas]) ===== */
+const DONACIONES=[
+ ['2025-11-11','Luis Montufar',144],['2025-11-12','Dilan Zamora',35],['2025-11-15','Dilan Zamora',39],
+ ['2025-12-24','Jhosue',901],['2026-03-15','Wilson Nastul',115],['2026-04-03','Fernando Arrioz',95],
+ ['2026-04-10','Darío Armas',206],['2026-06-23','Gustavo Patricio Romero Flores',159],
+ ['2026-10-08','Luis Montufar',210],['2026-11-17','Franz García Saltos',309]];
+(function(){
+  const tot=DONACIONES.reduce((a,d)=>a+d[2],0),max=Math.max(...DONACIONES.map(d=>d[2])),pers=new Set(DONACIONES.map(d=>d[1])).size;
+  const fmt=f=>new Date(f+'T00:00:00Z').toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+  $('donp').innerHTML=`<div class="k">TOTAL DONADO</div><h2>${tot.toLocaleString('es')}</h2><div class="s">plantas nativas entregadas sin costo</div>
+   <div class="dst"><div><b>${DONACIONES.length}</b><span>entregas</span></div><div><b>${pers}</b><span>personas</span></div></div>`;
+  $('donl').innerHTML=[...DONACIONES].sort((a,b)=>b[0].localeCompare(a[0])).map(([f,n,q])=>
+   `<div class="drow"><div class="dd">${fmt(f)}</div><div class="dn"><b>${esc(n)}</b><div class="bar"><i style="width:${q/max*100}%"></i></div></div><div class="dq">${q.toLocaleString('es')}<small> plantas</small></div></div>`).join('');
+})();
 loadInfo().then(load).then(render);
 setInterval(()=>load().then(render),REFRESH_MIN*60000);
 </script>
